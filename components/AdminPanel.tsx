@@ -7,11 +7,25 @@ import type { User } from "@supabase/supabase-js";
 export default function AdminPanel() {
     const [user, setUser] = useState<User | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        void supabaseBrowser.auth.getSession().then(({ data }) => {
-            setUser(data.session?.user ?? null);
-        });
+        async function loadUser() {
+            try {
+                const {
+                    data: { session },
+                } = await supabaseBrowser.auth.getSession();
+
+                setUser(session?.user ?? null);
+            } catch (error) {
+                console.error("Failed to load user session:", error);
+                setMessage("Failed to load authentication status");
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        void loadUser();
 
         const {
             data: { subscription },
@@ -25,30 +39,53 @@ export default function AdminPanel() {
     }, []);
 
     async function signIn() {
-        const { error } = await supabaseBrowser.auth.signInWithOAuth({
-            provider: "google",
-        });
+        setMessage(null);
 
-        if (error) {
-            setMessage(error.message);
+        try {
+            const { error } = await supabaseBrowser.auth.signInWithOAuth({
+                provider: "google",
+            });
+
+            if (error) {
+                setMessage(error.message);
+            }
+        } catch (error) {
+            console.error("Sign in error:", error);
+            setMessage("Failed to sign in. Please try again.");
         }
     }
 
     async function signOut() {
-        const { error } = await supabaseBrowser.auth.signOut();
+        setMessage(null);
 
-        if (error) {
-            setMessage(error.message);
-            return;
+        try {
+            const { error } = await supabaseBrowser.auth.signOut();
+
+            if (error) {
+                setMessage(error.message);
+                return;
+            }
+
+            setUser(null);
+            setMessage("Signed out successfully.");
+        } catch (error) {
+            console.error("Sign out error:", error);
+            setMessage("Failed to sign out. Please try again.");
         }
-
-        setMessage("Signed out successfully.");
     }
 
     const displayName =
-        user?.user_metadata?.full_name ??
-        user?.email ??
-        "Administrator";
+        typeof user?.user_metadata?.full_name === "string"
+            ? user.user_metadata.full_name
+            : user?.email ?? "Administrator";
+
+    if (isLoading) {
+        return (
+            <div className="space-y-8 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-900/5 md:p-10">
+                <p className="text-slate-600">Loading authentication status...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-900/5 md:p-10">
@@ -77,7 +114,7 @@ export default function AdminPanel() {
                     </div>
 
                     <button
-                        onClick={signOut}
+                        onClick={() => void signOut()}
                         className="inline-flex items-center justify-center rounded-full bg-orange-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-orange-400"
                     >
                         Sign out
@@ -90,7 +127,7 @@ export default function AdminPanel() {
                     </p>
 
                     <button
-                        onClick={signIn}
+                        onClick={() => void signIn()}
                         className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                     >
                         Sign in with Google
@@ -99,7 +136,7 @@ export default function AdminPanel() {
             )}
 
             {message && (
-                <p className="text-sm text-rose-600">
+                <p className={`text-sm ${message.includes("successfully") ? "text-green-600" : "text-rose-600"}`}>
                     {message}
                 </p>
             )}
