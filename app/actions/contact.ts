@@ -93,10 +93,18 @@ export async function sendInquiry(formData: FormData) {
                 <hr>
                 <h3>Message</h3>
                 <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
+                <hr>
+                <p>
+                    <a
+                        href="mailto:${encodeURI(email)}?subject=${encodeURIComponent(`Re: ${subject}`)}"
+                        style="display:inline-block;padding:12px 20px;border-radius:9999px;background:#020617;color:#ffffff;text-decoration:none;font-weight:600"
+                    >Reply to ${escapeHtml(name)}</a>
+                </p>
             `,
         });
 
-        // Auto-reply to the client
+        // Auto-reply to the client. Requires a verified Resend domain; with the
+        // sandbox sender this fails and only the studio notification goes out.
         const { error: replyError } = await getResend().emails.send({
             from: FROM_ADDRESS,
             to: email,
