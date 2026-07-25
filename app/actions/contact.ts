@@ -55,7 +55,7 @@ export async function sendInquiry(formData: FormData) {
         // Send notification email
         const { error: emailError } = await resend.emails.send({
             from: "JHBC Website <onboarding@resend.dev>",
-            to: process.env.EMAIL_TO || "arjiebuen101@gmail.com",
+            to: process.env.EMAIL_TO ?? "arjiebuen101@gmail.com",
             replyTo: email,
             subject: `New JHBC Inquiry: ${subject}`,
             html: `

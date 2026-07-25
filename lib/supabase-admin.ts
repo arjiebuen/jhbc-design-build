@@ -3,11 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl) {
+if (supabaseUrl === undefined || supabaseUrl === "") {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL environment variable");
 }
 
-if (!serviceRoleKey) {
+if (serviceRoleKey === undefined || serviceRoleKey === "") {
     throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
 }
 

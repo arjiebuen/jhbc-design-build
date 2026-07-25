@@ -135,7 +135,7 @@ export default function AdminPanel() {
                 </div>
             )}
 
-            {message && (
+            {message !== null && message !== "" && (
                 <p className={`text-sm ${message.includes("successfully") ? "text-green-600" : "text-rose-600"}`}>
                     {message}
                 </p>
