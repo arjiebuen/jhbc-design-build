@@ -1,7 +1,7 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import { resend } from "@/lib/resend";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getResend } from "@/lib/resend";
 
 function getFormValue(formData: FormData, key: string): string {
     const value = formData.get(key);
@@ -34,7 +34,7 @@ export async function sendInquiry(formData: FormData) {
 
     try {
         // Save inquiry to Supabase
-        const { error: databaseError } = await supabaseAdmin
+        const { error: databaseError } = await getSupabaseAdmin()
             .from("inquiries")
             .insert({
                 name,
@@ -53,7 +53,7 @@ export async function sendInquiry(formData: FormData) {
         }
 
         // Send notification email
-        const { error: emailError } = await resend.emails.send({
+        const { error: emailError } = await getResend().emails.send({
             from: "JHBC Website <onboarding@resend.dev>",
             to: process.env.EMAIL_TO ?? "arjiebuen101@gmail.com",
             replyTo: email,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import type { User } from "@supabase/supabase-js";
 
 export default function AdminPanel() {
@@ -14,7 +14,7 @@ export default function AdminPanel() {
             try {
                 const {
                     data: { session },
-                } = await supabaseBrowser.auth.getSession();
+                } = await getSupabaseBrowser().auth.getSession();
 
                 setUser(session?.user ?? null);
             } catch (error) {
@@ -29,7 +29,7 @@ export default function AdminPanel() {
 
         const {
             data: { subscription },
-        } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+        } = getSupabaseBrowser().auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
         });
 
@@ -42,7 +42,7 @@ export default function AdminPanel() {
         setMessage(null);
 
         try {
-            const { error } = await supabaseBrowser.auth.signInWithOAuth({
+            const { error } = await getSupabaseBrowser().auth.signInWithOAuth({
                 provider: "google",
             });
 
@@ -59,7 +59,7 @@ export default function AdminPanel() {
         setMessage(null);
 
         try {
-            const { error } = await supabaseBrowser.auth.signOut();
+            const { error } = await getSupabaseBrowser().auth.signOut();
 
             if (error) {
                 setMessage(error.message);
