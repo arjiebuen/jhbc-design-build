@@ -8,6 +8,16 @@ function getFormValue(formData: FormData, key: string): string {
     return typeof value === "string" ? value.trim() : "";
 }
 
+function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+const FROM_ADDRESS = process.env.EMAIL_FROM ?? "JHBC Website <onboarding@resend.dev>";
+
 export async function sendInquiry(formData: FormData) {
     const name = getFormValue(formData, "name");
     const email = getFormValue(formData, "email");
@@ -52,10 +62,12 @@ export async function sendInquiry(formData: FormData) {
             };
         }
 
-        // Send notification email
+        const adminEmail = process.env.EMAIL_TO ?? "arjiebuen101@gmail.com";
+
+        // Notify the studio
         const { error: emailError } = await getResend().emails.send({
-            from: "JHBC Website <onboarding@resend.dev>",
-            to: process.env.EMAIL_TO ?? "arjiebuen101@gmail.com",
+            from: FROM_ADDRESS,
+            to: adminEmail,
             replyTo: email,
             subject: `New JHBC Inquiry: ${subject}`,
             html: `
@@ -63,26 +75,50 @@ export async function sendInquiry(formData: FormData) {
                 <table cellpadding="8" cellspacing="0" border="0">
                     <tr>
                         <td><strong>Name</strong></td>
-                        <td>${name}</td>
+                        <td>${escapeHtml(name)}</td>
                     </tr>
                     <tr>
                         <td><strong>Email</strong></td>
-                        <td>${email}</td>
+                        <td>${escapeHtml(email)}</td>
                     </tr>
                     <tr>
                         <td><strong>Phone</strong></td>
-                        <td>${phone || "Not provided"}</td>
+                        <td>${phone === "" ? "Not provided" : escapeHtml(phone)}</td>
                     </tr>
                     <tr>
                         <td><strong>Subject</strong></td>
-                        <td>${subject}</td>
+                        <td>${escapeHtml(subject)}</td>
                     </tr>
                 </table>
                 <hr>
                 <h3>Message</h3>
-                <p>${message.replace(/\n/g, "<br>")}</p>
+                <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
             `,
         });
+
+        // Auto-reply to the client
+        const { error: replyError } = await getResend().emails.send({
+            from: FROM_ADDRESS,
+            to: email,
+            replyTo: adminEmail,
+            subject: `We received your inquiry: ${subject}`,
+            html: `
+                <p>Hi ${escapeHtml(name)},</p>
+                <p>
+                    Thank you for contacting JHBC Design and Build. We have received your
+                    inquiry and a member of our team will reply shortly.
+                </p>
+                <h3>Your message</h3>
+                <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
+                <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
+                <hr>
+                <p>JHBC Design and Build<br>${escapeHtml(adminEmail)}</p>
+            `,
+        });
+
+        if (replyError) {
+            console.error("Resend auto-reply error:", replyError);
+        }
 
         if (emailError) {
             console.error("Resend error:", emailError);
