@@ -123,6 +123,7 @@ npm run lint
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-only) |
 | `RESEND_API_KEY` | Resend API key for email delivery |
 | `EMAIL_TO` | Email address to receive inquiries |
+| `EMAIL_FROM` | Sender address for notification and auto-reply emails (must be a verified Resend domain to email clients) |
 
 ## Database Setup
 
